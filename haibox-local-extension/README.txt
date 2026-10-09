@@ -1,4 +1,4 @@
-HAIBOX Local Dashboard 4.1.0
+HAIBOX Local Dashboard 5.0.0 GOLDEN
 
 New installations start with 12 empty tiles. Long press a tile to edit it, or use Settings > Import Config to load a HAIBOX JSON configuration.
 

@@ -4,8 +4,7 @@ A configurable Chrome new-tab dashboard for opening HAIBOX web interfaces and ot
 
 ## Download
 
-- [Stable V4](https://github.com/simonemessina92/haibox-dashboard/raw/refs/heads/main/downloads/haibox-local-extension-V4.zip)
-- [Development v4.1.0](https://github.com/simonemessina92/haibox-dashboard/raw/refs/heads/develop/downloads/haibox-local-extension-V4.1.0.zip)
+[Download v5.0.0 GOLDEN](https://github.com/simonemessina92/haibox-dashboard/raw/refs/heads/main/downloads/haibox-local-extension-V5.0.0.zip)
 
 ## Install
 
@@ -22,13 +21,11 @@ Export your JSON configuration as a backup. Replace the files in the same extens
 
 ## Branches
 
-- `main`: stable version, currently V4.
-- `develop`: versions under test, currently v4.1.0.
+- `main`: stable GOLDEN version, currently v5.0.0.
+- `develop`: development and testing, based on the latest GOLDEN.
 
 Development versions are promoted to `main` after testing. The extension source is in `haibox-local-extension/`; installable ZIPs are in `downloads/`.
 
-## Development v4.1.0
+## Configuration
 
 Fresh installations start with 12 empty tiles. Existing settings are preserved on update. V4 JSON exports remain supported. Imports are validated and require confirmation before replacing settings. Open dashboard tabs synchronize configuration changes.
-
-Before promotion, check fresh installation, upgrade with saved links, valid and invalid JSON imports, editing different tiles in two tabs, and Chrome restart.
