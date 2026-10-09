@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HAIBOX Dashboard</title>
+  <meta name="theme-color" content="#25262c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <style>
+    :root {
+      --bg: #25262c;
+      --txt: #f3f3f5;
+      --muted: #a7a8b0;
+      --tile-active: #3b3c47;
+      --tile-pressed: #3b3c47;
+      --tile-inactive: #25262c;
+      --active: rgba(255, 255, 255, 0.18);
+      --app-vh: 100vh;
+      --grid-cols: 4;
+      --grid-rows: 3;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; background: var(--bg); }
+
+    body {
+      position: relative;
+      margin: 0;
+      font-family: "Gotham", "Gotham SSm", "Gotham Book", "Avenir Next", "Segoe UI", Arial, sans-serif;
+      background: #202020 url("./haibox_background.png") center top / cover no-repeat fixed;
+      color: var(--txt);
+      overflow: hidden;
+    }
+
+    .brand-logo {
+      position: fixed;
+      top: clamp(18px, 3vh, 38px);
+      left: 50%;
+      z-index: 1;
+      width: clamp(360px, 31vw, 620px);
+      height: auto;
+      max-height: clamp(130px, 22vh, 220px);
+      object-fit: contain;
+      transform: translateX(-50%);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 2;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: clamp(10px, 1.2vh, 16px) clamp(10px, 1.2vw, 22px) clamp(18px, 2.2vh, 30px);
+      padding-top: clamp(250px, 27vh, 320px);
+      height: var(--app-vh);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    button, select, input { font-family: inherit; }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-bottom-color: rgba(0, 0, 0, 0.34);
+      background: var(--tile-active);
+      color: var(--txt);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      touch-action: manipulation;
+      min-height: 44px;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 7px 14px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+    button:active { transform: translateY(1px); border-color: var(--active); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+    button:disabled { cursor: not-allowed; opacity: 0.58; transform: none; }
+
+    .grid {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+      grid-template-rows: repeat(var(--grid-rows), minmax(0, 1fr));
+      gap: clamp(18px, 2.2vh, 28px);
+      padding-bottom: clamp(16px, 2vh, 26px);
+      overflow: visible;
+      margin-top: 0;
+    }
+
+    .grid[data-density="dense"] { gap: clamp(10px, 1.4vh, 18px); }
+    .grid[data-density="medium"] { gap: clamp(14px, 1.8vh, 22px); }
+
+    .card {
+      appearance: none;
+      -webkit-user-drag: none;
+      -webkit-touch-callout: none;
+      position: relative;
+      text-decoration: none;
+      color: inherit;
+      font: inherit;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-top-color: rgba(255, 255, 255, 0.16);
+      border-bottom-color: rgba(0, 0, 0, 0.26);
+      background: var(--tile-active);
+      border-radius: 9px;
+      padding: clamp(8px, 1vh, 16px);
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+      overflow: hidden;
+      box-shadow: 0 18px 22px rgba(0,0,0,.24), 0 5px 10px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.07);
+      outline: none;
+      transition: transform 130ms ease, box-shadow 130ms ease, border-color 130ms ease, background 130ms ease;
+      will-change: transform, box-shadow;
+    }
+
+    .card:focus, .card:focus-visible { outline: none; box-shadow: 0 18px 22px rgba(0,0,0,.24), 0 5px 10px rgba(0,0,0,.14), 0 0 0 2px rgba(255,255,255,.10), inset 0 1px 0 rgba(255,255,255,.07); }
+    .card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.055), rgba(255,255,255,0) 56%), linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 42%); border-radius: inherit; pointer-events: none; }
+    .card::after { content: ""; position: absolute; inset: 1px; border-radius: 8px; border: 1px solid rgba(255,255,255,.025); pointer-events: none; }
+    .card:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.14); box-shadow: 0 19px 24px rgba(0,0,0,.25), 0 6px 11px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.08); }
+    .card:active { transform: translateY(3px); border-color: rgba(255,255,255,.08); background: var(--tile-pressed); box-shadow: 0 4px 7px rgba(0,0,0,.20), inset 0 1px 0 rgba(255,255,255,.04); }
+    .card.disabled { opacity: 1; filter: none; border-color: rgba(255,255,255,.035); border-bottom-color: rgba(0,0,0,.28); background: var(--tile-inactive); box-shadow: none; }
+    .card.disabled:hover, .card.disabled:focus, .card.disabled:focus-visible { transform: none; border-color: rgba(255,255,255,.035); background: var(--tile-inactive); box-shadow: none; }
+    .card.disabled:active { transform: translateY(1px); background: var(--tile-inactive); box-shadow: none; }
+
+    .v {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(17px, 2.25vh, 26px);
+      font-weight: 800;
+      margin: 0;
+      line-height: 1.1;
+      letter-spacing: 0;
+      max-width: 94%;
+      color: rgba(255,255,255,.94);
+      text-shadow: 0 7px 14px rgba(0,0,0,.32);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .grid[data-density="medium"] .v { font-size: clamp(15px, 1.85vh, 22px); }
+    .grid[data-density="dense"] .v { font-size: clamp(12px, 1.55vh, 18px); }
+    .card.disabled .v { color: rgba(143,144,154,.45); text-shadow: none; }
+
+    .settings-button {
+      position: fixed;
+      right: clamp(18px, 2vw, 34px);
+      bottom: clamp(18px, 2.2vh, 34px);
+      z-index: 20;
+      width: 56px;
+      height: 56px;
+      min-height: 56px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(59,60,71,.94);
+      backdrop-filter: blur(5px);
+    }
+
+    .settings-button svg { width: 25px; height: 25px; fill: currentColor; opacity: .92; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-box {
+      width: min(560px, 100%);
+      max-height: calc(var(--app-vh) - 36px);
+      overflow: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: var(--tile-active);
+      box-shadow: 0 24px 42px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.07);
+      padding: 18px;
+    }
+
+    .settings-box { width: min(700px, 100%); }
+    .modal-box h2 { margin: 0 0 12px 0; font-size: 18px; letter-spacing: .35px; }
+    .form-row { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+    @media (max-width: 760px) { .form-row { grid-template-columns: 1fr; } }
+    .form-row label, .settings-label { color: var(--muted); font-size: 13px; }
+
+    .form-row input, .settings-select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.12);
+      background: var(--tile-inactive);
+      color: var(--txt);
+      padding: 11px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      min-height: 44px;
+      box-sizing: border-box;
+    }
+
+    .settings-section { padding: 13px 0; border-top: 1px solid rgba(255,255,255,.08); }
+    .settings-section:first-of-type { border-top: 0; padding-top: 0; }
+    .settings-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: start; margin-top: 10px; }
+    .settings-help { color: rgba(210,212,222,.72); font-size: 12px; line-height: 1.35; margin-top: 7px; }
+    .logo-preview-wrap { display: flex; align-items: center; justify-content: center; min-height: 92px; border: 1px dashed rgba(255,255,255,.16); border-radius: 14px; background: rgba(0,0,0,.16); padding: 12px; margin-bottom: 10px; }
+    .logo-preview { max-width: min(360px, 100%); max-height: 110px; object-fit: contain; }
+    .modal-buttons, .settings-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .hidden-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .footer { margin-top: 14px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+    @media (max-width: 760px) {
+      .settings-row { grid-template-columns: 1fr; }
+      .settings-button { width: 52px; height: 52px; min-height: 52px; }
+    }
+  </style>
+</head>
+<body>
+  <img id="brandLogo" class="brand-logo" src="./haivision-haibox-logo.png" alt="Dashboard logo" />
+
+  <div class="wrap">
+    <div id="grid" class="grid"></div>
+
+    <div id="tileEditor" class="modal" aria-hidden="true">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="tileEditorTitle">
+        <h2 id="tileEditorTitle">Edit Tile</h2>
+        <div class="form-row"><label for="tileName">Name</label><input id="tileName" type="text" /></div>
+        <div class="form-row"><label for="tileUrl">URL</label><input id="tileUrl" type="text" /></div>
+        <div class="modal-buttons"><button id="btnTileSave" type="button">Save</button><button id="btnTileCancel" type="button">Cancel</button><button id="btnTileClear" type="button">Clear Tile</button></div>
+        <div class="footer">Long press a tile to edit it. Short tap opens the link.</div>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal" aria-hidden="true">
+      <div class="modal-box settings-box" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <h2 id="settingsTitle">Dashboard Settings</h2>
+
+        <div class="settings-section">
+          <div class="settings-row">
+            <label class="settings-label" for="tileCountSelect">Tiles</label>
+            <div>
+              <select id="tileCountSelect" class="settings-select">
+                <option value="4">4 tiles</option>
+                <option value="9">9 tiles</option>
+                <option value="12">12 tiles</option>
+                <option value="16">16 tiles</option>
+                <option value="24">24 tiles</option>
+                <option value="32">32 tiles</option>
+              </select>
+              <div class="settings-help">Changing this keeps existing tile data. Hidden tiles reappear if you increase the count again.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-row">
+            <div class="settings-label">Logo</div>
+            <div>
+              <div class="logo-preview-wrap"><img id="settingsLogoPreview" class="logo-preview" src="./haivision-haibox-logo.png" alt="Logo preview" /></div>
+              <div class="settings-actions"><button id="btnLogoUpload" type="button">Upload Logo</button><button id="btnLogoReset" type="button">Reset Logo</button></div>
+              <input id="logoFileInput" class="hidden-file" type="file" accept="image/*" />
+              <div class="settings-help">Uploaded logos are resized before saving, so the extension stays light.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-row">
+            <div class="settings-label">Portability</div>
+            <div>
+              <div class="settings-actions"><button id="btnExportConfig" type="button">Export Config</button><button id="btnImportConfig" type="button">Import Config</button><button id="btnClearAllTabs" class="danger-button" type="button">Clear All Tabs</button></div>
+              <input id="configFileInput" class="hidden-file" type="file" accept="application/json,.json" />
+              <div class="settings-help">Export includes tile count, tile names, links and custom logo. Import this file on another machine to clone the dashboard.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions"><button id="btnSettingsSave" type="button">Save Settings</button><button id="btnSettingsClose" type="button">Close</button></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="settingsButton" class="settings-button" type="button" aria-label="Open settings">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.37-.31-.6-.22l-2.49 1a7.3 7.3 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.49.42L9.13 5.07c-.61.24-1.18.56-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.37.31.6.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.25.42.49.42h4c.24 0 .45-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.48 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" /></svg>
+  </button>
+
+  <script src="./haibox-dashboard.js"></script>
+</body>
+</html>
+
+
