@@ -1,17 +1,4 @@
-const BASE_DEFAULTS = [
-  { name: "Proxmox", url: "https://haibox.ddns.net:8006" },
-  { name: "StreamHub", url: "https://haibox.ddns.net" },
-  { name: "Haivision SRT Gateway", url: "https://haibox.ddns.net:10444" },
-  { name: "Makito X4 Encoder", url: "https://haibox.ddns.net:10443" },
-  { name: "Hub 360", url: "https://account.haivision.com/0b3bcffa-b533-44b0-a6d7-7cb93763d518/b2c_1a_custom_policy/oauth2/v2.0/authorize?response_type=code&client_id=9592a993-fa2a-423b-a608-bd0cafaf3558&state=eyJyZXBseVVybCI6Imh0dHBzOi8vaHViMzYwLmhhaXZpc2lvbi5jb20vc2lnbi1pbi9mdWxmaWxsZWQiLCJpZHAiOiJiMmMiLCJwYXJhbXMiOnsiVEZQIjoiQjJDXzFBX0NVU1RPTV9QT0xJQ1kifSwicmVkaXJlY3RVcmkiOiJodHRwczovL2h1YjM2MC5oYWl2aXNpb24uY29tL3NhbmN1cy9vYXV0aC9jb2RlUmVxdWVzdENhbGxiYWNrIn0=&scope=openid%20profile%20email%20offline_access&redirect_uri=https://hub360.haivision.com/sancus/oauth/codeRequestCallback" },
-  { name: "Info Center", url: "https://doc.haivision.com/Home/" },
-  { name: "Haivision Website", url: "https://www.haivision.com" },
-  { name: "Google", url: "http://www.google.com" },
-  { name: "Speed Test", url: "https://www.speedtest.net/" },
-  { name: "VPN Settings", url: "https://haibox.ddns.net:65000" },
-  { name: "What's my IP ?", url: "https://whatismyipaddress.com/" },
-  { name: "Router", url: "https://haibox.ddns.net:8080" }
-];
+const BASE_DEFAULTS = [];
 
 const CONFIG_KEY = "haibox_dashboard_config_v3";
 const LEGACY_LINKS_KEY = "haibox_links_ubuntu_v1";
@@ -192,15 +179,11 @@ async function loadConfig() {
       const result = await chromeStorageGet([CONFIG_KEY, LEGACY_LINKS_KEY]);
       if (result[CONFIG_KEY]) {
         const config = normalizeConfig(result[CONFIG_KEY]);
-        await chromeStorageSet({ [CONFIG_KEY]: config, [LEGACY_LINKS_KEY]: config.links });
-        writeLocalBackups(config);
         return config;
       }
 
       if (result[LEGACY_LINKS_KEY]) {
         const config = normalizeConfig(result[LEGACY_LINKS_KEY]);
-        await chromeStorageSet({ [CONFIG_KEY]: config, [LEGACY_LINKS_KEY]: config.links });
-        writeLocalBackups(config);
         return config;
       }
     } catch (err) {
@@ -390,14 +373,46 @@ function setSavingState(isSaving) {
   btnClearAllTabs.disabled = isSaving;
 }
 
+async function updateConfig(edit) {
+  const update = async () => saveConfig(edit(await loadConfig()));
+  if (navigator.locks) return navigator.locks.request("haibox-config-write", update);
+  return update();
+}
+
+function validateImport(raw) {
+  const links = Array.isArray(raw) ? raw : raw && (raw.links || raw.tiles);
+  if (!Array.isArray(links) || links.length > MAX_TILE_COUNT ||
+      (!Array.isArray(raw) && raw.type && raw.type !== "haibox-dashboard-config") ||
+      (!Array.isArray(raw) && raw.tileCount !== undefined && !TILE_COUNT_OPTIONS.includes(raw.tileCount)) ||
+      (!Array.isArray(raw) && raw.logoDataUrl && !isValidLogoDataUrl(raw.logoDataUrl))) {
+    throw new Error("Invalid HAIBOX configuration.");
+  }
+  for (const tile of links) {
+    if (!tile || typeof tile.name !== "string" || typeof tile.url !== "string") throw new Error("Invalid tile.");
+    validateTileUrl(tile.url);
+  }
+  return normalizeConfig(raw);
+}
+
+function validateTileUrl(raw) {
+  const url = normalizeUrl(raw);
+  if (!url) return "";
+  const parsed = new URL(url);
+  if (!["https:", "http:", "file:"].includes(parsed.protocol)) throw new Error("Use an HTTP, HTTPS or file URL.");
+  if (parsed.protocol !== "file:" && !parsed.hostname) throw new Error("Invalid URL.");
+  return url;
+}
+
 async function saveActiveTile() {
   if (activeTile < 0 || saving) return;
-  const nextLinks = cloneLinks(state.links, MAX_TILE_COUNT);
-  nextLinks[activeTile] = { name: tileName.value.trim(), url: normalizeUrl(tileUrl.value) };
+  const index = activeTile;
+  let tile;
+  try { tile = { name: tileName.value.trim(), url: validateTileUrl(tileUrl.value) }; }
+  catch (err) { alert(err.message || "Invalid URL."); return; }
 
   setSavingState(true);
   try {
-    state = await saveConfig({ ...state, links: nextLinks });
+    state = await updateConfig(latest => { latest.links[index] = tile; return latest; });
     renderGrid();
     closeTileEditorAfterSave();
   } catch (err) {
@@ -410,12 +425,11 @@ async function saveActiveTile() {
 
 async function clearActiveTile() {
   if (activeTile < 0 || saving) return;
-  const nextLinks = cloneLinks(state.links, MAX_TILE_COUNT);
-  nextLinks[activeTile] = emptyTile();
+  const index = activeTile;
 
   setSavingState(true);
   try {
-    state = await saveConfig({ ...state, links: nextLinks });
+    state = await updateConfig(latest => { latest.links[index] = emptyTile(); return latest; });
     renderGrid();
     closeTileEditorAfterSave();
   } catch (err) {
@@ -454,7 +468,8 @@ async function saveSettings() {
   if (!settingsDraft || saving) return;
   setSavingState(true);
   try {
-    state = await saveConfig({ ...state, tileCount: normalizeTileCount(settingsDraft.tileCount), logoDataUrl: settingsDraft.logoDataUrl || "" });
+    const draft = { ...settingsDraft };
+    state = await updateConfig(latest => ({ ...latest, tileCount: normalizeTileCount(draft.tileCount), logoDataUrl: draft.logoDataUrl || "" }));
     applyLogo();
     renderGrid();
     closeSettingsAfterSave();
@@ -569,9 +584,11 @@ async function importConfigFile(file) {
   if (!file) return;
   setSavingState(true);
   try {
+    if (file.size > 5000000) throw new Error("Configuration file is too large.");
     const text = await readFileAsText(file);
-    const imported = normalizeConfig(JSON.parse(text));
-    state = await saveConfig(imported);
+    const imported = validateImport(JSON.parse(text));
+    if (!confirm("Replace all current tiles, tile count and logo with this configuration?")) return;
+    state = await updateConfig(() => imported);
     applyLogo();
     renderGrid();
     if (settingsModal.classList.contains("show")) {
@@ -596,7 +613,7 @@ async function clearAllTabs() {
 
   setSavingState(true);
   try {
-    state = await saveConfig({ ...state, links: Array.from({ length: MAX_TILE_COUNT }, emptyTile) });
+    state = await updateConfig(latest => ({ ...latest, links: Array.from({ length: MAX_TILE_COUNT }, emptyTile) }));
     renderGrid();
     if (tileEditor.classList.contains("show")) closeTileEditorAfterSave();
     alert("All tabs cleared.");
@@ -644,6 +661,16 @@ document.addEventListener("keydown", (ev) => {
   if (tileEditor.classList.contains("show")) closeTileEditor();
   else if (settingsModal.classList.contains("show")) closeSettings();
 });
+
+if (hasChromeStorage()) {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !changes[CONFIG_KEY]) return;
+    state = normalizeConfig(changes[CONFIG_KEY].newValue);
+    applyLogo();
+    renderGrid();
+    // Keep unsaved form values intact while updating the dashboard behind them.
+  });
+}
 
 init();
 

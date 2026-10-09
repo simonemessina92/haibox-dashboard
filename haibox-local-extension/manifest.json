@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HAIBOX Local Dashboard",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Dashboard locale HAIBOX configurabile come nuova scheda Chrome.",
   "permissions": [
     "storage"
@@ -15,4 +15,3 @@
     "newtab": "haibox-dashboard.html"
   }
 }
-
